@@ -26,3 +26,7 @@ dist-ssr
 # Environment files
 .env.local
 .env.*.local
+
+# Internal docs — DB schema, functions, specs (keep private)
+docs/
+.supabase/
