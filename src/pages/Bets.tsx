@@ -54,7 +54,7 @@ export function Bets() {
       byDate.set(bet.bet_date, row)
     }
     const rows = Array.from(byDate.values()).sort((a, b) => b.bet_date.localeCompare(a.bet_date))
-    const text = porDataToWhatsApp(rows, from, to, null)
+    const text = porDataToWhatsApp(rows, from, to, [])
     void navigator.clipboard.writeText(text)
   }
 

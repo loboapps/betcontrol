@@ -17,8 +17,8 @@ function thirtyDaysAgoISO() {
 }
 
 export function PorEvento() {
-  const [sport, setSport]           = useState<string | null>(null)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [sport, setSport]               = useState<string | null>(null)
+  const [selectedIds, setSelectedIds]   = useState<string[]>([])
 
   const from = thirtyDaysAgoISO()
   const to   = todayISO()
@@ -29,7 +29,7 @@ export function PorEvento() {
   const filtered = sport ? rows.filter((r) => r.sport === sport) : rows
 
   function handleCopy() {
-    const text = porEventoToWhatsApp(filtered, sport, selectedId)
+    const text = porEventoToWhatsApp(filtered, sport, selectedIds)
     void navigator.clipboard.writeText(text)
   }
 
@@ -64,11 +64,11 @@ export function PorEvento() {
           <PlayerSidebar
             players={players}
             loading={playersLoading}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
+            selectedIds={selectedIds}
+            onSelect={setSelectedIds}
           />
           <div className="flex-1">
-            <PorEventoTable rows={filtered} loading={dataLoading} selectedPlayerId={selectedId} />
+            <PorEventoTable rows={filtered} loading={dataLoading} selectedPlayerIds={selectedIds} />
           </div>
         </div>
       </div>

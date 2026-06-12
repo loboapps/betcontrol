@@ -30,19 +30,32 @@ describe('porDataToWhatsApp', () => {
   ]
 
   it('includes date range in header', () => {
-    const text = porDataToWhatsApp(rows, '2024-11-10', '2024-11-10', null)
+    const text = porDataToWhatsApp(rows, '2024-11-10', '2024-11-10', [])
     expect(text).toContain('10/11')
   })
 
-  it('includes group totals', () => {
-    const text = porDataToWhatsApp(rows, '2024-11-10', '2024-11-10', null)
+  it('includes group totals when none selected', () => {
+    const text = porDataToWhatsApp(rows, '2024-11-10', '2024-11-10', [])
     expect(text).toContain('300,00')
     expect(text).toContain('+R$ 160,00')
   })
 
-  it('includes all player names when no player selected', () => {
-    const text = porDataToWhatsApp(rows, '2024-11-10', '2024-11-10', null)
+  it('includes all player names when none selected', () => {
+    const text = porDataToWhatsApp(rows, '2024-11-10', '2024-11-10', [])
     expect(text).toContain('Wolf')
     expect(text).toContain('Choi')
+  })
+
+  it('aggregates only selected players', () => {
+    const text = porDataToWhatsApp(rows, '2024-11-10', '2024-11-10', ['1'])
+    expect(text).toContain('Wolf')
+    expect(text).not.toContain('Choi')
+    expect(text).toContain('150,00')
+  })
+
+  it('aggregates multiple selected players', () => {
+    const text = porDataToWhatsApp(rows, '2024-11-10', '2024-11-10', ['1', '2'])
+    expect(text).toContain('Wolf + Choi')
+    expect(text).toContain('300,00')
   })
 })

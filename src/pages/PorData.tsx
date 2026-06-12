@@ -17,15 +17,15 @@ function thirtyDaysAgoISO() {
 }
 
 export function PorData() {
-  const [from, setFrom]             = useState(thirtyDaysAgoISO)
-  const [to, setTo]                 = useState(todayISO)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [from, setFrom]               = useState(thirtyDaysAgoISO)
+  const [to, setTo]                   = useState(todayISO)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
 
   const { rows, loading: dataLoading }       = usePorData(from, to)
   const { players, loading: playersLoading } = usePlayerSummary()
 
   function handleCopy() {
-    const text = porDataToWhatsApp(rows, from, to, selectedId)
+    const text = porDataToWhatsApp(rows, from, to, selectedIds)
     void navigator.clipboard.writeText(text)
   }
 
@@ -43,11 +43,11 @@ export function PorData() {
           <PlayerSidebar
             players={players}
             loading={playersLoading}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
+            selectedIds={selectedIds}
+            onSelect={setSelectedIds}
           />
           <div className="flex-1">
-            <PorDataTable rows={rows} loading={dataLoading} selectedPlayerId={selectedId} />
+            <PorDataTable rows={rows} loading={dataLoading} selectedPlayerIds={selectedIds} />
           </div>
         </div>
       </div>

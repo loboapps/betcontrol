@@ -20,26 +20,18 @@ export function porDataToWhatsApp(
   rows: PorDataRow[],
   from: string,
   to: string,
-  selectedPlayerId: string | null
+  selectedPlayerIds: string[]
 ): string {
-  const groupBuyin  = rows.reduce((s, r) => s + r.group_buyin, 0)
-  const groupPayout = rows.reduce((s, r) => s + r.group_payout, 0)
-  const groupNet    = rows.reduce((s, r) => s + r.group_net, 0)
-
   const fromLabel = formatDate(from)
   const toLabel   = formatDate(to)
   const dateRange = fromLabel === toLabel ? fromLabel : `${fromLabel} a ${toLabel}`
 
   let text = `📊 BetControl — ${dateRange}\n\n`
-  text += `💰 Grupo\n`
-  text += `Investido: ${brl(groupBuyin)}\n`
-  text += `Retorno:   ${brl(groupPayout)}\n`
-  text += `Lucro:     ${formatBRL(groupNet)}\n`
 
   const playerMap = new Map<string, { name: string; buyin: number; payout: number; net: number }>()
   for (const row of rows) {
     for (const p of row.players) {
-      if (selectedPlayerId && p.player_id !== selectedPlayerId) continue
+      if (selectedPlayerIds.length > 0 && !selectedPlayerIds.includes(p.player_id)) continue
       const existing = playerMap.get(p.player_id)
       if (existing) {
         existing.buyin  += p.buyin
@@ -51,11 +43,31 @@ export function porDataToWhatsApp(
     }
   }
 
-  for (const [, player] of playerMap) {
-    text += `\n👤 ${player.name}\n`
-    text += `Investido: ${brl(player.buyin)}\n`
-    text += `Retorno:   ${brl(player.payout)}\n`
-    text += `Lucro:     ${formatBRL(player.net)}\n`
+  const players = Array.from(playerMap.values())
+  const totalBuyin  = players.reduce((s, p) => s + p.buyin,  0)
+  const totalPayout = players.reduce((s, p) => s + p.payout, 0)
+  const totalNet    = players.reduce((s, p) => s + p.net,    0)
+
+  const label = selectedPlayerIds.length === 0 ? 'Grupo' : players.map((p) => p.name).join(' + ')
+  text += `💰 ${label}\n`
+  text += `Investido: ${brl(totalBuyin)}\n`
+  text += `Retorno:   ${brl(totalPayout)}\n`
+  text += `Lucro:     ${formatBRL(totalNet)}\n`
+
+  if (selectedPlayerIds.length > 1) {
+    for (const player of players) {
+      text += `\n👤 ${player.name}\n`
+      text += `Investido: ${brl(player.buyin)}\n`
+      text += `Retorno:   ${brl(player.payout)}\n`
+      text += `Lucro:     ${formatBRL(player.net)}\n`
+    }
+  } else if (selectedPlayerIds.length === 0) {
+    for (const player of players) {
+      text += `\n👤 ${player.name}\n`
+      text += `Investido: ${brl(player.buyin)}\n`
+      text += `Retorno:   ${brl(player.payout)}\n`
+      text += `Lucro:     ${formatBRL(player.net)}\n`
+    }
   }
 
   return text
@@ -64,31 +76,42 @@ export function porDataToWhatsApp(
 export function porEventoToWhatsApp(
   rows: PorEventoRow[],
   sport: string | null,
-  selectedPlayerId: string | null
+  selectedPlayerIds: string[]
 ): string {
-  const groupBuyin  = rows.reduce((s, r) => s + r.group_buyin, 0)
-  const groupPayout = rows.reduce((s, r) => s + r.group_payout, 0)
-  const groupNet    = rows.reduce((s, r) => s + r.group_net, 0)
-
   const label = sport ? sport : 'Todos os esportes'
   let text = `📊 BetControl — Por Evento (${label})\n\n`
-  text += `💰 Grupo\n`
-  text += `Investido: ${brl(groupBuyin)}\n`
-  text += `Retorno:   ${brl(groupPayout)}\n`
-  text += `Lucro:     ${formatBRL(groupNet)}\n`
+
+  const totBuyin  = rows.reduce((s, r) => {
+    if (selectedPlayerIds.length === 0) return s + r.group_buyin
+    return s + r.players.filter((p) => selectedPlayerIds.includes(p.player_id)).reduce((a, p) => a + p.buyin, 0)
+  }, 0)
+  const totPayout = rows.reduce((s, r) => {
+    if (selectedPlayerIds.length === 0) return s + r.group_payout
+    return s + r.players.filter((p) => selectedPlayerIds.includes(p.player_id)).reduce((a, p) => a + p.payout, 0)
+  }, 0)
+  const totNet = rows.reduce((s, r) => {
+    if (selectedPlayerIds.length === 0) return s + r.group_net
+    return s + r.players.filter((p) => selectedPlayerIds.includes(p.player_id)).reduce((a, p) => a + p.net, 0)
+  }, 0)
+
+  const groupLabel = selectedPlayerIds.length === 0 ? 'Grupo' : 'Selecionados'
+  text += `💰 ${groupLabel}\n`
+  text += `Investido: ${brl(totBuyin)}\n`
+  text += `Retorno:   ${brl(totPayout)}\n`
+  text += `Lucro:     ${formatBRL(totNet)}\n`
 
   for (const row of rows) {
     const eventName = row.event_label ? `${row.sport} — ${row.event_label}` : row.sport
-    text += `\n📌 ${eventName} (${row.bet_count} bet${row.bet_count !== 1 ? 's' : ''})\n`
-    text += `Investido: ${brl(row.group_buyin)}\n`
-    text += `Lucro:     ${formatBRL(row.group_net)}\n`
+    const selected = selectedPlayerIds.length > 0
+      ? row.players.filter((p) => selectedPlayerIds.includes(p.player_id))
+      : null
 
-    if (selectedPlayerId) {
-      const player = row.players.find((p) => p.player_id === selectedPlayerId)
-      if (player) {
-        text += `${player.player_name}: ${formatBRL(player.net)}\n`
-      }
-    }
+    const evBuyin  = selected ? selected.reduce((s, p) => s + p.buyin,  0) : row.group_buyin
+    const evNet    = selected ? selected.reduce((s, p) => s + p.net,    0) : row.group_net
+
+    text += `\n📌 ${eventName} (${row.bet_count} bet${row.bet_count !== 1 ? 's' : ''})\n`
+    text += `Investido: ${brl(evBuyin)}\n`
+    text += `Lucro:     ${formatBRL(evNet)}\n`
   }
 
   return text
