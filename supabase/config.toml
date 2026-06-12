@@ -1,0 +1,5 @@
+[functions.bet-admin]
+verify_jwt = false
+
+[functions.bet-parse-slip]
+verify_jwt = false
