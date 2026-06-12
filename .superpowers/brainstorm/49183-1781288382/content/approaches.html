@@ -1,0 +1,133 @@
+<h2>Qual arquitetura de navegação?</h2>
+<p class="subtitle">3 abordagens para organizar a plataforma. Cada uma atende os perfis de uso de forma diferente.</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="display:flex;height:160px;background:#1a1a2e;border-radius:6px;overflow:hidden;font-size:11px;">
+        <div style="width:140px;background:#16213e;padding:10px 8px;display:flex;flex-direction:column;gap:6px;border-right:1px solid #0f3460;">
+          <div style="color:#e94560;font-weight:700;font-size:12px;margin-bottom:4px;">BetControl</div>
+          <div style="background:#0f3460;color:#fff;padding:4px 8px;border-radius:4px;">📊 Dashboard</div>
+          <div style="color:#aaa;padding:4px 8px;">🎯 Apostas</div>
+          <div style="color:#aaa;padding:4px 8px;">📈 Analytics</div>
+          <div style="color:#aaa;padding:4px 8px;margin-top:auto;">⚙️ Admin</div>
+        </div>
+        <div style="flex:1;padding:10px;display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;gap:6px;">
+            <div style="flex:1;background:#0f3460;border-radius:4px;padding:6px;text-align:center;">
+              <div style="color:#4ade80;font-size:14px;font-weight:700;">+$26</div>
+              <div style="color:#aaa;font-size:9px;">WOLF</div>
+            </div>
+            <div style="flex:1;background:#0f3460;border-radius:4px;padding:6px;text-align:center;">
+              <div style="color:#f87171;font-size:14px;font-weight:700;">-$24</div>
+              <div style="color:#aaa;font-size:9px;">FELIPE</div>
+            </div>
+            <div style="flex:1;background:#0f3460;border-radius:4px;padding:6px;text-align:center;">
+              <div style="color:#4ade80;font-size:14px;font-weight:700;">+$128</div>
+              <div style="color:#aaa;font-size:9px;">CHOI</div>
+            </div>
+          </div>
+          <div style="background:#0f3460;border-radius:4px;padding:6px;flex:1;">
+            <div style="color:#aaa;font-size:9px;margin-bottom:4px;">ÚLTIMAS APOSTAS</div>
+            <div style="color:#fff;font-size:10px;">⚽ Mexico ML + Over 7 Corners</div>
+            <div style="color:#4ade80;font-size:9px;">WON +$4.80</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Dashboard com sidebar</h3>
+      <p>Navegação lateral persistente. Seções separadas: Dashboard, Apostas, Analytics, Admin. Melhor para análise profunda (Wolf) e expansão futura.</p>
+      <div class="pros-cons" style="margin-top:8px;">
+        <div class="pros"><h4>Pros</h4><ul><li>Melhor para KPIs e analytics</li><li>Estrutura clara por função</li><li>Fácil de expandir</li></ul></div>
+        <div class="cons"><h4>Contras</h4><ul><li>Mais pesado para mobile</li><li>Mais trabalho de UI</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="display:flex;flex-direction:column;height:160px;background:#1a1a2e;border-radius:6px;overflow:hidden;font-size:11px;">
+        <div style="background:#16213e;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #0f3460;">
+          <span style="color:#e94560;font-weight:700;">BetControl</span>
+          <div style="display:flex;gap:12px;color:#aaa;font-size:10px;">
+            <span style="color:#fff;">Resumo</span>
+            <span>Apostas</span>
+            <span>P&L</span>
+          </div>
+        </div>
+        <div style="padding:10px;display:flex;flex-direction:column;gap:6px;flex:1;">
+          <div style="display:flex;gap:4px;overflow:hidden;">
+            <div style="background:#16213e;border:1px solid #4ade80;border-radius:20px;padding:3px 8px;color:#4ade80;font-size:9px;white-space:nowrap;">WOLF +$26</div>
+            <div style="background:#16213e;border:1px solid #f87171;border-radius:20px;padding:3px 8px;color:#f87171;font-size:9px;white-space:nowrap;">FELIPE -$24</div>
+            <div style="background:#16213e;border:1px solid #4ade80;border-radius:20px;padding:3px 8px;color:#4ade80;font-size:9px;white-space:nowrap;">CHOI +$128</div>
+          </div>
+          <div style="background:#0f3460;border-radius:4px;padding:6px;flex:1;">
+            <div style="color:#aaa;font-size:9px;margin-bottom:4px;">P&L POR SPORT (todos)</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+              <span style="color:#fff;font-size:9px;width:24px;">🏈</span>
+              <div style="flex:1;background:#1a1a2e;height:6px;border-radius:3px;"><div style="width:60%;height:6px;background:#f87171;border-radius:3px;"></div></div>
+              <span style="color:#f87171;font-size:9px;">-$85</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="color:#fff;font-size:9px;width:24px;">⚽</span>
+              <div style="flex:1;background:#1a1a2e;height:6px;border-radius:3px;"><div style="width:40%;height:6px;background:#4ade80;border-radius:3px;"></div></div>
+              <span style="color:#4ade80;font-size:9px;">+$42</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Top nav + página única</h3>
+      <p>Header fixo com 3 abas. Chips de jogador no topo para alternar foco. Tudo numa página com scroll. Mais leve e rápido.</p>
+      <div class="pros-cons" style="margin-top:8px;">
+        <div class="pros"><h4>Pros</h4><ul><li>Rápido no mobile</li><li>Menos cliques para o uso casual</li><li>Simples de construir</li></ul></div>
+        <div class="cons"><h4>Contras</h4><ul><li>Analytics fica limitado</li><li>Fica poluído com muitos dados</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="display:flex;flex-direction:column;height:160px;background:#1a1a2e;border-radius:6px;overflow:hidden;font-size:11px;">
+        <div style="background:#16213e;padding:8px 12px;border-bottom:1px solid #0f3460;display:flex;justify-content:space-between;">
+          <span style="color:#e94560;font-weight:700;">BetControl</span>
+          <span style="color:#aaa;font-size:9px;">todos jogadores</span>
+        </div>
+        <div style="display:flex;flex:1;overflow:hidden;">
+          <div style="width:36px;background:#16213e;display:flex;flex-direction:column;align-items:center;padding:8px 0;gap:8px;border-right:1px solid #0f3460;">
+            <div style="width:22px;height:22px;background:#4ade80;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#000;font-size:8px;font-weight:700;">W</div>
+            <div style="width:22px;height:22px;background:#0f3460;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:8px;">F</div>
+            <div style="width:22px;height:22px;background:#0f3460;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:8px;">C</div>
+            <div style="width:22px;height:22px;background:#0f3460;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:8px;">J</div>
+          </div>
+          <div style="flex:1;padding:8px;overflow:hidden;">
+            <div style="color:#aaa;font-size:9px;margin-bottom:4px;">WOLF — P&L por evento</div>
+            <div style="background:#0f3460;border-radius:4px;padding:5px;margin-bottom:4px;">
+              <div style="display:flex;justify-content:space-between;"><span style="color:#fff;font-size:9px;">🏈 NFL 25-26</span><span style="color:#f87171;font-size:9px;">-$18.5</span></div>
+            </div>
+            <div style="background:#0f3460;border-radius:4px;padding:5px;margin-bottom:4px;">
+              <div style="display:flex;justify-content:space-between;"><span style="color:#fff;font-size:9px;">⚽ FIFA WC 25</span><span style="color:#4ade80;font-size:9px;">+$4.8</span></div>
+            </div>
+            <div style="background:#0f3460;border-radius:4px;padding:5px;">
+              <div style="display:flex;justify-content:space-between;"><span style="color:#fff;font-size:9px;">🏀 NBA 25-26</span><span style="color:#4ade80;font-size:9px;">+$39.8</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Avatar rail + foco por jogador</h3>
+      <p>Coluna lateral fina com avatares dos jogadores. Clicar num avatar carrega o dashboard daquele jogador. Grupo sempre visível na barra lateral.</p>
+      <div class="pros-cons" style="margin-top:8px;">
+        <div class="pros"><h4>Pros</h4><ul><li>Visão individual muito rápida</li><li>Funciona bem no mobile</li><li>Elegante e focado</li></ul></div>
+        <div class="cons"><h4>Contras</h4><ul><li>Visão comparativa fica escondida</li><li>Menos óbvio sem onboarding</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px;">Minha recomendação: <strong>A (sidebar)</strong> — o Wolf usa isso como ferramenta analítica séria, e a sidebar escala melhor quando quiser adicionar novas seções.</p>
