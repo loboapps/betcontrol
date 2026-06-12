@@ -11,42 +11,47 @@ type AdminSection = 'upload' | 'classify' | 'deposits'
 
 const NUMPAD_KEYS = ['1','2','3','4','5','6','7','8','9','','0','⌫'] as const
 
-function PinScreen({ onUnlock }: { onUnlock: (pin: string) => void }) {
-  const [pin, setPin] = useState('')
+interface PinScreenProps {
+  pin: string
+  loading: boolean
+  error: boolean
+  onKey: (key: string) => void
+}
 
-  function handleKey(key: string) {
-    if (key === '⌫') {
-      setPin((p) => p.slice(0, -1))
-    } else if (pin.length < 4) {
-      const next = pin + key
-      setPin(next)
-      if (next.length === 4) onUnlock(next)
-    }
-  }
-
+function PinScreen({ pin, loading, error, onKey }: PinScreenProps) {
   return (
     <div className="min-h-screen bg-zinc-900 flex items-center justify-center">
       <div className="flex flex-col items-center gap-8">
         <p className="text-amber-500 font-bold text-xl">BetControl Admin</p>
+
         <div className="flex gap-4">
           {[0,1,2,3].map((i) => (
             <div
               key={i}
-              className={`w-4 h-4 rounded-full border-2 transition-colors ${
-                i < pin.length ? 'bg-amber-500 border-amber-500' : 'border-zinc-600'
+              className={`w-4 h-4 rounded-full border-2 transition-all duration-150 ${
+                loading
+                  ? 'bg-amber-500 border-amber-500 animate-pulse'
+                  : error
+                  ? 'bg-rose-500 border-rose-500'
+                  : i < pin.length
+                  ? 'bg-amber-500 border-amber-500'
+                  : 'border-zinc-600'
               }`}
             />
           ))}
         </div>
+
         <div className="grid grid-cols-3 gap-3">
           {NUMPAD_KEYS.map((key, idx) => (
             <button
               key={idx}
-              onClick={() => key !== '' && handleKey(key)}
-              disabled={key === ''}
+              onClick={() => key !== '' && onKey(key)}
+              disabled={key === '' || loading}
               className={`w-16 h-16 rounded-2xl text-xl font-semibold transition-colors ${
                 key === ''
                   ? 'invisible'
+                  : loading
+                  ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
                   : 'bg-zinc-800 text-zinc-100 hover:bg-zinc-700 active:bg-zinc-600'
               }`}
             >
@@ -54,6 +59,10 @@ function PinScreen({ onUnlock }: { onUnlock: (pin: string) => void }) {
             </button>
           ))}
         </div>
+
+        {loading && (
+          <p className="text-zinc-500 text-sm">Verificando...</p>
+        )}
       </div>
     </div>
   )
@@ -61,36 +70,48 @@ function PinScreen({ onUnlock }: { onUnlock: (pin: string) => void }) {
 
 export function Admin() {
   const [adminToken, setAdminToken] = useState<string | null>(null)
-  const [unauthorized, setUnauthorized] = useState(false)
-  const [section, setSection] = useState<AdminSection>('upload')
+  const [pin, setPin]               = useState('')
+  const [loading, setLoading]       = useState(false)
+  const [error, setError]           = useState(false)
+  const [section, setSection]       = useState<AdminSection>('upload')
   const { players } = usePlayerSummary()
 
-  async function handleUnlock(pin: string) {
+  async function handleUnlock(p: string) {
+    setLoading(true)
     const res = await fetch(`${SUPABASE_FUNCTION_URL}/bet-admin`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'classify_events', admin_token: pin, classifications: [] }),
+      body: JSON.stringify({ action: 'classify_events', admin_token: p, classifications: [] }),
     })
+    setLoading(false)
     if (res.status === 401) {
-      setUnauthorized(true)
-      setTimeout(() => setUnauthorized(false), 1500)
+      setError(true)
+      setPin('')
+      setTimeout(() => setError(false), 800)
     } else {
-      setAdminToken(pin)
+      setAdminToken(p)
+    }
+  }
+
+  function handleKey(key: string) {
+    if (loading) return
+    if (key === '⌫') {
+      setPin((prev) => prev.slice(0, -1))
+    } else if (pin.length < 4) {
+      const next = pin + key
+      setPin(next)
+      if (next.length === 4) void handleUnlock(next)
     }
   }
 
   if (!adminToken) {
     return (
-      <div className="relative">
-        <PinScreen onUnlock={(pin) => { void handleUnlock(pin) }} />
-        {unauthorized && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <p className="text-rose-400 font-semibold text-lg bg-zinc-900/80 px-6 py-3 rounded-xl">
-              PIN incorreto
-            </p>
-          </div>
-        )}
-      </div>
+      <PinScreen
+        pin={pin}
+        loading={loading}
+        error={error}
+        onKey={handleKey}
+      />
     )
   }
 
