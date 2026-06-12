@@ -34,12 +34,14 @@ const EMPTY_FORM = {
 
 export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUploadProps) {
   const fileRef = useRef<HTMLInputElement>(null)
-  const [parsing, setParsing]       = useState(false)
-  const [saving, setSaving]         = useState(false)
-  const [saved, setSaved]           = useState(false)
-  const [parseError, setParseError] = useState<string | null>(null)
-  const [form, setForm]             = useState({ ...EMPTY_FORM })
-  const [allocations, setAllocations] = useState<PlayerAllocation[]>([])
+  const [parsing, setParsing]           = useState(false)
+  const [saving, setSaving]             = useState(false)
+  const [saved, setSaved]               = useState(false)
+  const [dragging, setDragging]         = useState(false)
+  const [selectedFile, setSelectedFile] = useState<string | null>(null)
+  const [parseError, setParseError]     = useState<string | null>(null)
+  const [form, setForm]                 = useState({ ...EMPTY_FORM })
+  const [allocations, setAllocations]   = useState<PlayerAllocation[]>([])
   const [inputTokens, setInputTokens]   = useState<number | null>(null)
   const [outputTokens, setOutputTokens] = useState<number | null>(null)
 
@@ -47,11 +49,10 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
     setAllocations(players.map((p) => ({ player_id: p.id, name: p.name, buyin: '' })))
   }, [players])
 
-  async function handleParse() {
-    const file = fileRef.current?.files?.[0]
-    if (!file) return
+  async function parseFile(file: File) {
     setParsing(true)
     setParseError(null)
+    setSelectedFile(file.name)
 
     const reader = new FileReader()
     reader.onload = async () => {
@@ -75,6 +76,29 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
       setParsing(false)
     }
     reader.readAsDataURL(file)
+  }
+
+  function handleFileInputChange() {
+    const file = fileRef.current?.files?.[0]
+    if (file) void parseFile(file)
+  }
+
+  function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    setDragging(true)
+  }
+
+  function handleDragLeave(e: React.DragEvent<HTMLDivElement>) {
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return
+    setDragging(false)
+  }
+
+  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    setDragging(false)
+    const file = e.dataTransfer.files[0]
+    if (!file || !file.type.startsWith('image/')) return
+    void parseFile(file)
   }
 
   function totalAllocated(): number {
@@ -133,6 +157,7 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
     setAllocations(players.map((p) => ({ player_id: p.id, name: p.name, buyin: '' })))
     setInputTokens(null)
     setOutputTokens(null)
+    setSelectedFile(null)
     if (fileRef.current) fileRef.current.value = ''
     setTimeout(() => setSaved(false), 3000)
   }
@@ -141,25 +166,42 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
     <div className="space-y-6">
       <h2 className="text-zinc-100 font-semibold text-lg">Upload de Slip</h2>
 
-      <Card className="p-4">
-        <div className="flex items-center gap-3">
-          <input ref={fileRef} type="file" accept="image/*" className="hidden" id="slip-file" />
-          <label
-            htmlFor="slip-file"
-            className="flex items-center gap-2 px-4 py-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-zinc-100 text-sm font-medium cursor-pointer transition-colors"
-          >
-            <Upload size={16} /> Selecionar imagem
-          </label>
-          <Button onClick={() => { void handleParse() }} disabled={parsing} variant="secondary">
-            {parsing ? 'Analisando...' : 'Parsear Slip'}
-          </Button>
-          {inputTokens !== null && (
-            <span className="text-zinc-500 text-xs">
-              {inputTokens + (outputTokens ?? 0)} tokens usados
-            </span>
-          )}
+      <Card className="p-4 space-y-3">
+        <div
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onClick={() => { if (!parsing) fileRef.current?.click() }}
+          className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl p-8 transition-colors ${
+            parsing
+              ? 'border-zinc-700 cursor-wait'
+              : dragging
+              ? 'border-amber-500 bg-amber-500/10 cursor-copy'
+              : 'border-zinc-600 hover:border-zinc-500 cursor-pointer'
+          }`}
+        >
+          <Upload size={24} className={dragging ? 'text-amber-500' : 'text-zinc-500'} />
+          <p className="text-sm text-zinc-400 text-center">
+            {parsing
+              ? 'Analisando...'
+              : selectedFile
+              ? selectedFile
+              : 'Arraste uma imagem aqui ou clique para selecionar'}
+          </p>
         </div>
-        {parseError && <p className="text-rose-400 text-sm mt-2">{parseError}</p>}
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileInputChange}
+        />
+        {inputTokens !== null && (
+          <span className="text-zinc-500 text-xs">
+            {inputTokens + (outputTokens ?? 0)} tokens usados
+          </span>
+        )}
+        {parseError && <p className="text-rose-400 text-sm">{parseError}</p>}
       </Card>
 
       <Card className="p-4 space-y-4">
