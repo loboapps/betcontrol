@@ -73,4 +73,13 @@ Instead:
 
 ## Database Table Prefix
 
-All tables use the `bc_` prefix (e.g. `bc_bets`, `bc_players`).
+All tables use the `bet_` prefix (e.g. `bet_bets`, `bet_players`).
+
+Tables:
+- `bet_players` — bettors
+- `bet_bets` — bet slips
+- `bet_player_bets` — per-player allocation per bet
+
+RPC functions: `bet_get_*` prefix (e.g. `bet_get_bets`, `bet_get_player_summary`)
+
+Edge Functions: `bet-parse-slip`, `bet-admin`
