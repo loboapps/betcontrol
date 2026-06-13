@@ -3,6 +3,7 @@ import Anthropic from 'npm:@anthropic-ai/sdk'
 interface SlipRequestBody {
   admin_token: string
   image_base64: string
+  media_type: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
   vendor: string
 }
 
@@ -49,7 +50,7 @@ Deno.serve(async (req: Request) => {
               type: 'image',
               source: {
                 type: 'base64',
-                media_type: 'image/jpeg',
+                media_type: body.media_type ?? 'image/jpeg',
                 data: body.image_base64,
               },
             },

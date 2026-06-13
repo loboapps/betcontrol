@@ -83,7 +83,7 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
         const res = await fetch(`${supabaseFunctionUrl}/bet-parse-slip`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ admin_token: adminToken, image_base64: base64, vendor: 'fanduel' }),
+          body: JSON.stringify({ admin_token: adminToken, image_base64: base64, media_type: file.type, vendor: 'fanduel' }),
         })
         const json = (await res.json()) as { data?: ParsedSlip; input_tokens?: number; output_tokens?: number; error?: string }
         if (json.error) throw new Error(json.error)
