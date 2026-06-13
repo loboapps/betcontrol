@@ -313,8 +313,8 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex flex-col gap-1">
+        <div className="flex gap-4 items-end">
+          <div className="flex flex-col gap-1 flex-1">
             <label className="text-sm text-zinc-400">Wager ($)</label>
             <input
               type="text"
@@ -332,7 +332,7 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
               className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-zinc-100 text-sm font-mono focus:outline-none focus:border-amber-500"
             />
           </div>
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 flex-1">
             <label className="text-sm text-zinc-400">Payout ($)</label>
             <input
               type="text"
@@ -350,26 +350,14 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
               className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-zinc-100 text-sm font-mono focus:outline-none focus:border-amber-500"
             />
           </div>
-        </div>
-
-        <div className="flex gap-6">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={form.won}
-              onChange={(e) => setForm((f) => ({ ...f, won: e.target.checked, gtd: e.target.checked ? false : f.gtd }))}
-              className="accent-amber-500 w-4 h-4"
-            />
-            <span className="text-zinc-200 text-sm">Ganhou</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
+          <label className="flex items-center gap-2 cursor-pointer pb-2.5">
             <input
               type="checkbox"
               checked={form.gtd}
-              onChange={(e) => setForm((f) => ({ ...f, gtd: e.target.checked, won: e.target.checked ? false : f.won }))}
+              onChange={(e) => setForm((f) => ({ ...f, gtd: e.target.checked }))}
               className="accent-amber-500 w-4 h-4"
             />
-            <span className="text-zinc-200 text-sm">GTD (devolvido)</span>
+            <span className="text-zinc-200 text-sm">GTD</span>
           </label>
         </div>
 
@@ -395,18 +383,26 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
           {allocations.map((alloc, i) => (
             <div key={alloc.player_id} className="flex items-center gap-3">
               <span className="text-zinc-200 text-sm w-20 shrink-0">{alloc.name}</span>
-              <Input
-                type="number"
-                step="0.01"
-                min="0"
+              <input
+                type="text"
+                inputMode="decimal"
                 placeholder="0.00"
                 value={alloc.buyin}
                 onChange={(e) => {
+                  const val = onlyDecimal(e.target.value)
                   const next = [...allocations]
-                  next[i] = { ...next[i], buyin: e.target.value }
+                  next[i] = { ...next[i], buyin: val }
                   setAllocations(next)
                 }}
-                className="w-28"
+                onBlur={() => {
+                  const n = parseFloat(alloc.buyin)
+                  if (n > 0) {
+                    const next = [...allocations]
+                    next[i] = { ...next[i], buyin: n.toFixed(2) }
+                    setAllocations(next)
+                  }
+                }}
+                className="w-28 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-zinc-100 text-sm font-mono focus:outline-none focus:border-amber-500"
               />
               {parseFloat(alloc.buyin) > 0 && (
                 <Badge sport={form.sport} className="text-xs" />

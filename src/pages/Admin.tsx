@@ -3,11 +3,12 @@ import { Layout } from '../components/layout/Layout'
 import { SlipUpload } from '../components/admin/SlipUpload'
 import { ClassifyBets } from '../components/admin/ClassifyBets'
 import { ManageDeposits } from '../components/admin/ManageDeposits'
+import { OpenBets } from '../components/admin/OpenBets'
 import { usePlayerSummary } from '../hooks/usePlayerSummary'
 
 const SUPABASE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL as string}/functions/v1`
 
-type AdminSection = 'upload' | 'classify' | 'deposits'
+type AdminSection = 'upload' | 'open' | 'classify' | 'deposits'
 
 const NUMPAD_KEYS = ['1','2','3','4','5','6','7','8','9','','0','⌫'] as const
 
@@ -117,8 +118,9 @@ export function Admin() {
 
   const tabs: { key: AdminSection; label: string }[] = [
     { key: 'upload',   label: 'Upload Slip' },
-    { key: 'classify', label: 'Classificar'  },
-    { key: 'deposits', label: 'Depósitos'    },
+    { key: 'open',     label: 'Open'        },
+    { key: 'classify', label: 'Classificar' },
+    { key: 'deposits', label: 'Depósitos'   },
   ]
 
   return (
@@ -141,6 +143,7 @@ export function Admin() {
           ))}
         </div>
         {section === 'upload'   && <SlipUpload     adminToken={adminToken} supabaseFunctionUrl={SUPABASE_FUNCTION_URL} players={players} />}
+        {section === 'open'     && <OpenBets       adminToken={adminToken} supabaseFunctionUrl={SUPABASE_FUNCTION_URL} />}
         {section === 'classify' && <ClassifyBets   adminToken={adminToken} supabaseFunctionUrl={SUPABASE_FUNCTION_URL} />}
         {section === 'deposits' && <ManageDeposits adminToken={adminToken} supabaseFunctionUrl={SUPABASE_FUNCTION_URL} />}
       </div>

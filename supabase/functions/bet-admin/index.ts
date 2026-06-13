@@ -25,6 +25,7 @@ type RequestBody =
   | { action: 'save_bet'; admin_token: string; bet: BetRow; players: PlayerInput[] }
   | { action: 'update_deposits'; admin_token: string; deposits: Array<{ player_id: string; total_deposited: number }> }
   | { action: 'classify_events'; admin_token: string; classifications: Array<{ bet_id: string; event_label: string }> }
+  | { action: 'settle_bet'; admin_token: string; bet_id: string; result: 'won' | 'lost' }
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -97,6 +98,52 @@ Deno.serve(async (req: Request) => {
           .eq('id', bet_id)
         if (error) throw error
       }
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    if (body.action === 'settle_bet') {
+      const { bet_id, result } = body
+
+      if (result === 'won') {
+        const { data: betData, error: fetchErr } = await supabase
+          .from('bet_bets')
+          .select('total_buyin, total_payout')
+          .eq('id', bet_id)
+          .single()
+        if (fetchErr) throw fetchErr
+
+        const { total_buyin, total_payout } = betData as { total_buyin: number; total_payout: number }
+
+        const { data: playerBets, error: pbErr } = await supabase
+          .from('bet_player_bets')
+          .select('id, buyin')
+          .eq('bet_id', bet_id)
+        if (pbErr) throw pbErr
+
+        for (const pb of playerBets as { id: string; buyin: number }[]) {
+          const payout = total_buyin > 0 ? (pb.buyin / total_buyin) * total_payout : 0
+          const { error } = await supabase
+            .from('bet_player_bets')
+            .update({ payout })
+            .eq('id', pb.id)
+          if (error) throw error
+        }
+
+        const { error: wonErr } = await supabase
+          .from('bet_bets')
+          .update({ won: true, settled_at: new Date().toISOString() })
+          .eq('id', bet_id)
+        if (wonErr) throw wonErr
+      } else {
+        const { error } = await supabase
+          .from('bet_bets')
+          .update({ settled_at: new Date().toISOString() })
+          .eq('id', bet_id)
+        if (error) throw error
+      }
+
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
