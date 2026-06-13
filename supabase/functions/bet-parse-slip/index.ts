@@ -78,7 +78,10 @@ Use empty string for unreadable text and 0 for unreadable numbers.`,
       throw new Error('No text response from model')
     }
 
-    const parsed = JSON.parse(textBlock.text) as ParsedSlip
+    let jsonText = textBlock.text.trim()
+    const mdMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/)
+    if (mdMatch) jsonText = mdMatch[1].trim()
+    const parsed = JSON.parse(jsonText) as ParsedSlip
 
     return new Response(
       JSON.stringify({
