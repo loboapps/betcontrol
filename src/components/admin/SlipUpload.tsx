@@ -26,7 +26,7 @@ const EMPTY_FORM = {
   description: '',
   total_buyin: 0,
   total_payout: 0,
-  sport: 'NFL',
+  sport: '',
   won: false,
   gtd: false,
   vendor: 'fanduel',
@@ -219,15 +219,20 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
               onChange={(e) => setForm((f) => ({ ...f, sport: e.target.value }))}
               className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-zinc-100 text-sm focus:outline-none focus:border-amber-500"
             >
+              <option value="">—</option>
               {SPORTS.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
         </div>
-        <Input
-          label="Descrição"
-          value={form.description}
-          onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-        />
+        <div className="flex flex-col gap-1">
+          <label className="text-sm text-zinc-400">Descrição</label>
+          <textarea
+            rows={4}
+            value={form.description}
+            onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+            className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-zinc-100 text-sm focus:outline-none focus:border-amber-500 resize-none font-mono"
+          />
+        </div>
         <div className="grid grid-cols-2 gap-4">
           <Input
             label="Total Buyin (R$)"
@@ -311,7 +316,7 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
 
       <Button
         onClick={() => { void handleSave() }}
-        disabled={saving || !form.description || form.total_buyin <= 0}
+        disabled={saving || !form.sport || !form.description || form.total_buyin <= 0}
         className="flex items-center gap-2"
       >
         {saved ? <><CheckCircle size={16} /> Salvo!</> : saving ? 'Salvando...' : 'Confirmar e Salvar'}

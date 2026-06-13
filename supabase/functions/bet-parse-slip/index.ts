@@ -55,18 +55,47 @@ Deno.serve(async (req: Request) => {
             },
             {
               type: 'text',
-              text: `Parse this FanDuel bet slip image. Return ONLY valid JSON — no markdown, no explanation:
+              text: `Parse this FanDuel bet slip image. Return ONLY valid JSON — no markdown, no explanation.
 
+FIELD MAPPING:
+- slip_ref: the BET ID in the header (e.g. "O/1141360/0001679"). Empty string if not visible.
+- bet_date: date placed, format YYYY-MM-DD. If only time is visible use today's date.
+- total_buyin: the "Wager" field value as a plain number (no $ sign).
+- total_payout: the "Total payout" field value as a plain number (no $ sign).
+- sport: always return empty string "".
+- vendor: always "fanduel".
+- description: structured multi-line text following the rules below.
+
+DESCRIPTION RULES:
+1. If it is a Same Game Parlay (SGP): first line = "SGP: [team1] v [team2]"
+   If it is a regular parlay: first line = "Parlay"
+   If it is a single bet: no header line.
+2. Each selection (leg) gets its own line: "[player] [prop]"
+3. Player name: abbreviate first name to initial only → "Christian Pulisic" becomes "C. Pulisic"
+4. If a leg has NO visible player name: use "[?]" as the player placeholder.
+5. Team bets (no individual player): use team abbreviation or short name.
+6. Prop abbreviations:
+   - "over" or "Over" → "o"  (e.g. "Over 1.5" → "o1.5")
+   - "under" or "Under" → "u"  (e.g. "Under 2.5" → "u2.5")
+   - "N or more X" → "N+ X"  (e.g. "1 or more shots on target" → "1+ Shots on target")
+   - "to score" → "Score"
+7. Capitalize stat names (e.g. "shots on target" → "Shots on target").
+
+EXAMPLE — SGP with 2 legs, first player name not visible:
 {
-  "slip_ref": "slip/ticket ID if visible, otherwise empty string",
-  "bet_date": "YYYY-MM-DD date the bet was placed",
-  "description": "full bet description — teams, players, bet type",
-  "total_buyin": total amount wagered as a number without $ sign,
-  "total_payout": potential payout if the bet wins as a number without $ sign,
-  "vendor": "fanduel"
+  "description": "SGP: USA v Paraguay\\n[?] o1+ Shots on target\\nC. Pulisic o1+ Shots on target"
 }
 
-Use empty string for unreadable text and 0 for unreadable numbers.`,
+Return this exact JSON shape:
+{
+  "slip_ref": "",
+  "bet_date": "YYYY-MM-DD",
+  "description": "",
+  "total_buyin": 0,
+  "total_payout": 0,
+  "sport": "",
+  "vendor": "fanduel"
+}`,
             },
           ],
         },
