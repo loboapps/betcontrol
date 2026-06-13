@@ -26,6 +26,7 @@ type RequestBody =
   | { action: 'update_deposits'; admin_token: string; deposits: Array<{ player_id: string; total_deposited: number }> }
   | { action: 'classify_events'; admin_token: string; classifications: Array<{ bet_id: string; event_label: string }> }
   | { action: 'settle_bet'; admin_token: string; bet_id: string; result: 'won' | 'lost' }
+  | { action: 'upsert_leg_result'; admin_token: string; bet_id: string; leg_index: number; result_value: number }
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -144,6 +145,20 @@ Deno.serve(async (req: Request) => {
         if (error) throw error
       }
 
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    if (body.action === 'upsert_leg_result') {
+      const { bet_id, leg_index, result_value } = body
+      const { error } = await supabase
+        .from('bet_leg_results')
+        .upsert(
+          { bet_id, leg_index, result_value, updated_at: new Date().toISOString() },
+          { onConflict: 'bet_id,leg_index' }
+        )
+      if (error) throw error
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })

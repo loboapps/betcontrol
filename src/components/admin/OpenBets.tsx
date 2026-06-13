@@ -41,12 +41,13 @@ interface BetCardProps {
   bet: OpenBet
   values: string[]
   onValueChange: (idx: number, value: string) => void
+  onValueBlur: (idx: number, value: string) => void
   adminToken: string
   supabaseFunctionUrl: string
   onSettled: () => void
 }
 
-function BetCard({ bet, values, onValueChange, adminToken, supabaseFunctionUrl, onSettled }: BetCardProps) {
+function BetCard({ bet, values, onValueChange, onValueBlur, adminToken, supabaseFunctionUrl, onSettled }: BetCardProps) {
   const [settling, setSettling] = useState(false)
   const legLines = bet.description.split('\n').filter((l) => l.trim())
 
@@ -94,6 +95,7 @@ function BetCard({ bet, values, onValueChange, adminToken, supabaseFunctionUrl, 
                 inputMode="decimal"
                 value={values[i] ?? '0'}
                 onChange={(e) => onValueChange(i, e.target.value.replace(/[^0-9.]/g, ''))}
+                onBlur={(e) => onValueBlur(i, e.target.value)}
                 className="w-14 bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1.5 text-zinc-100 text-sm font-mono text-center focus:outline-none focus:border-amber-500"
               />
               <span className="text-zinc-600 text-xs">/</span>
@@ -132,6 +134,27 @@ export function OpenBets({ adminToken, supabaseFunctionUrl }: OpenBetsProps) {
 
   useEffect(() => { load() }, [load])
 
+  useEffect(() => {
+    if (bets.length === 0) return
+    setLegValues((prev) => {
+      const next: Record<string, string[]> = {}
+      for (const bet of bets) {
+        if (prev[bet.id]) {
+          next[bet.id] = prev[bet.id]
+        } else {
+          const legCount = bet.description.split('\n').filter((l) => l.trim()).length
+          next[bet.id] = Array.from({ length: legCount }, (_, i) => {
+            const lr = bet.leg_results.find((r) => r.leg_index === i)
+            return lr?.result_value !== null && lr?.result_value !== undefined
+              ? String(lr.result_value)
+              : '0'
+          })
+        }
+      }
+      return next
+    })
+  }, [bets])
+
   const updateValue = useCallback((betId: string, idx: number, value: string) => {
     setLegValues((prev) => {
       const current = prev[betId] ?? []
@@ -140,6 +163,22 @@ export function OpenBets({ adminToken, supabaseFunctionUrl }: OpenBetsProps) {
       return { ...prev, [betId]: next }
     })
   }, [])
+
+  async function upsertLegResult(betId: string, legIndex: number, value: string) {
+    const numVal = parseFloat(value)
+    if (isNaN(numVal)) return
+    await fetch(`${supabaseFunctionUrl}/bet-admin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'upsert_leg_result',
+        admin_token: adminToken,
+        bet_id: betId,
+        leg_index: legIndex,
+        result_value: numVal,
+      }),
+    })
+  }
 
   function getValues(bet: OpenBet): string[] {
     const legCount = bet.description.split('\n').filter((l) => l.trim()).length
@@ -177,6 +216,7 @@ export function OpenBets({ adminToken, supabaseFunctionUrl }: OpenBetsProps) {
           bet={bet}
           values={getValues(bet)}
           onValueChange={(idx, val) => updateValue(bet.id, idx, val)}
+          onValueBlur={(idx, val) => { void upsertLegResult(bet.id, idx, val) }}
           adminToken={adminToken}
           supabaseFunctionUrl={supabaseFunctionUrl}
           onSettled={load}
