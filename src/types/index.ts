@@ -27,6 +27,7 @@ export interface Bet {
   won: boolean
   gtd: boolean
   vendor: string
+  settled_at: string | null
   players: BetPlayer[]
 }
 

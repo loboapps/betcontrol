@@ -13,9 +13,10 @@ function formatBetDate(dateStr: string): string {
 }
 
 function statusLabel(bet: Bet): { text: string; className: string } {
-  if (bet.gtd) return { text: 'GTD',  className: 'text-zinc-400'   }
-  if (bet.won) return { text: 'WIN',  className: 'text-emerald-400' }
-  return         { text: 'LOSS', className: 'text-rose-400'    }
+  if (bet.gtd)          return { text: 'GTD',  className: 'text-zinc-400'    }
+  if (!bet.settled_at)  return { text: 'OPEN', className: 'text-amber-400'   }
+  if (bet.won)          return { text: 'WIN',  className: 'text-emerald-400' }
+  return                       { text: 'LOSS', className: 'text-rose-400'    }
 }
 
 export function BetRow({ bet }: BetRowProps) {
