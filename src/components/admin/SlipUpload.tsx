@@ -57,6 +57,20 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
     setAllocations(players.map((p) => ({ player_id: p.id, name: p.name, buyin: '' })))
   }, [players])
 
+  const parseFileRef = useRef(parseFile)
+  useEffect(() => { parseFileRef.current = parseFile })
+
+  useEffect(() => {
+    function onPaste(e: ClipboardEvent) {
+      const item = Array.from(e.clipboardData?.items ?? []).find((i) => i.type.startsWith('image/'))
+      if (!item) return
+      const file = item.getAsFile()
+      if (file) void parseFileRef.current(file)
+    }
+    document.addEventListener('paste', onPaste)
+    return () => document.removeEventListener('paste', onPaste)
+  }, [])
+
   async function parseFile(file: File) {
     setParsing(true)
     setParseError(null)
