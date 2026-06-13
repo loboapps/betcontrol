@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { BarChart2, Calendar, TrendingUp } from 'lucide-react'
+import { BarChart2, Calendar, TrendingUp, Plus } from 'lucide-react'
 
 const navItems = [
   { to: '/',           label: 'Bets',       icon: BarChart2 },
@@ -25,6 +25,13 @@ export function BottomNav() {
           {label}
         </NavLink>
       ))}
+      <NavLink
+        to="/admin"
+        className="flex flex-col items-center justify-center flex-1 py-2 gap-1 text-xs font-medium text-amber-500"
+      >
+        <Plus size={20} />
+        Nova Bet
+      </NavLink>
     </nav>
   )
 }

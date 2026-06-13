@@ -204,9 +204,10 @@ export function OpenBets({ adminToken, supabaseFunctionUrl }: OpenBetsProps) {
       <div className="flex justify-end">
         <button
           onClick={copyAll}
-          className="flex items-center gap-2 px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-zinc-200 text-sm transition-colors"
+          title="Copiar todas para WhatsApp"
+          className="p-1.5 text-zinc-500 hover:text-zinc-200 transition-colors"
         >
-          <Copy size={14} /> Copiar todas
+          <Copy size={16} />
         </button>
       </div>
 
