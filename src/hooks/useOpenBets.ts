@@ -6,6 +6,13 @@ export interface LegResult {
   result_value: number | null
 }
 
+export interface PlayerBetDistribution {
+  player_bet_id: string
+  player_id: string
+  player_name: string
+  buyin: number
+}
+
 export interface OpenBet {
   id: string
   slip_ref: string | null
@@ -15,6 +22,7 @@ export interface OpenBet {
   total_buyin: number
   total_payout: number
   leg_results: LegResult[]
+  players: PlayerBetDistribution[]
 }
 
 export function useOpenBets() {

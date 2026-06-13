@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { CheckCircle, Copy } from 'lucide-react'
+import { CheckCircle, Copy, Edit2, Check, X } from 'lucide-react'
 import { Card } from '../ui/Card'
 import { Badge } from '../ui/Badge'
 import { useOpenBets, type OpenBet } from '../../hooks/useOpenBets'
@@ -49,7 +49,18 @@ interface BetCardProps {
 
 function BetCard({ bet, values, onValueChange, onValueBlur, adminToken, supabaseFunctionUrl, onSettled }: BetCardProps) {
   const [settling, setSettling] = useState(false)
+  const [editingDistribution, setEditingDistribution] = useState(false)
+  const [distributionValues, setDistributionValues] = useState<Record<string, string>>({})
+  const [savingDistribution, setSavingDistribution] = useState(false)
   const legLines = bet.description.split('\n').filter((l) => l.trim())
+
+  useEffect(() => {
+    const initial: Record<string, string> = {}
+    for (const p of bet.players) {
+      initial[p.player_bet_id] = String(p.buyin)
+    }
+    setDistributionValues(initial)
+  }, [bet.players])
 
   async function settle(result: 'won' | 'lost') {
     setSettling(true)
@@ -65,6 +76,45 @@ function BetCard({ bet, values, onValueChange, onValueBlur, adminToken, supabase
     void navigator.clipboard.writeText(betToWhatsApp(bet, values))
   }
 
+  const totalDistribution = Object.values(distributionValues)
+    .map((v) => parseFloat(v) || 0)
+    .reduce((a, b) => a + b, 0)
+
+  const isDistributionValid = Math.abs(totalDistribution - bet.total_buyin) < 0.01
+
+  async function saveDistribution() {
+    if (!isDistributionValid) return
+
+    setSavingDistribution(true)
+    const distribution = Object.entries(distributionValues).map(([player_bet_id, buyin]) => ({
+      player_bet_id,
+      buyin: parseFloat(buyin) || 0,
+    }))
+
+    await fetch(`${supabaseFunctionUrl}/bet-admin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'update_bet_distribution',
+        admin_token: adminToken,
+        bet_id: bet.id,
+        distribution,
+      }),
+    })
+    setSavingDistribution(false)
+    setEditingDistribution(false)
+    onSettled()
+  }
+
+  function cancelDistribution() {
+    const initial: Record<string, string> = {}
+    for (const p of bet.players) {
+      initial[p.player_bet_id] = String(p.buyin)
+    }
+    setDistributionValues(initial)
+    setEditingDistribution(false)
+  }
+
   return (
     <Card className="p-4 space-y-3">
       <div className="flex items-center justify-between">
@@ -73,14 +123,65 @@ function BetCard({ bet, values, onValueChange, onValueBlur, adminToken, supabase
           <span className="text-zinc-400 text-xs">{formatDateMD(bet.bet_date)}</span>
           <span className="text-zinc-300 text-sm font-mono">${bet.total_buyin.toFixed(2)} → ${bet.total_payout.toFixed(2)}</span>
         </div>
-        <button
-          onClick={copyOne}
-          className="p-1.5 text-zinc-500 hover:text-zinc-200 transition-colors"
-          title="Copiar WhatsApp"
-        >
-          <Copy size={14} />
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setEditingDistribution(!editingDistribution)}
+            className="p-1.5 text-zinc-500 hover:text-zinc-200 transition-colors"
+            title="Editar distribuição"
+          >
+            <Edit2 size={14} />
+          </button>
+          <button
+            onClick={copyOne}
+            className="p-1.5 text-zinc-500 hover:text-zinc-200 transition-colors"
+            title="Copiar WhatsApp"
+          >
+            <Copy size={14} />
+          </button>
+        </div>
       </div>
+
+      {editingDistribution && (
+        <div className="bg-zinc-900/50 rounded-lg p-3 space-y-2 border border-zinc-700">
+          <div className="text-xs text-zinc-400 font-medium mb-2">Redistribuir valores (Total: ${totalDistribution.toFixed(2)} / ${bet.total_buyin.toFixed(2)})</div>
+          {bet.players.map((player) => (
+            <div key={player.player_bet_id} className="flex items-center gap-2">
+              <span className="text-zinc-300 text-sm w-24 truncate">{player.player_name}</span>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={distributionValues[player.player_bet_id] ?? '0'}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^0-9.]/g, '')
+                  setDistributionValues((prev) => ({ ...prev, [player.player_bet_id]: val }))
+                }}
+                className={`w-20 bg-zinc-800 border rounded-lg px-2 py-1 text-zinc-100 text-sm font-mono text-center focus:outline-none transition-colors ${
+                  isDistributionValid
+                    ? 'border-zinc-600 focus:border-amber-500'
+                    : 'border-rose-600 focus:border-rose-500'
+                }`}
+              />
+            </div>
+          ))}
+          <div className="flex gap-2 pt-2 border-t border-zinc-700">
+            <button
+              onClick={saveDistribution}
+              disabled={!isDistributionValid || savingDistribution}
+              className="flex-1 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-medium transition-colors flex items-center justify-center gap-1"
+            >
+              <Check size={12} />
+              Salvar
+            </button>
+            <button
+              onClick={cancelDistribution}
+              className="flex-1 py-1.5 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-white text-xs font-medium transition-colors flex items-center justify-center gap-1"
+            >
+              <X size={12} />
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-2">
         {legLines.map((leg, i) => {
