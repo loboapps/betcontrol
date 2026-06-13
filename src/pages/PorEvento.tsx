@@ -3,7 +3,6 @@ import { Copy } from 'lucide-react'
 import { Layout } from '../components/layout/Layout'
 import { PlayerSidebar } from '../components/analytics/PlayerSidebar'
 import { PorEventoTable } from '../components/analytics/PorEventoTable'
-import { Button } from '../components/ui/Button'
 import { usePorEvento } from '../hooks/usePorEvento'
 import { usePlayerSummary } from '../hooks/usePlayerSummary'
 import { porEventoToWhatsApp } from '../lib/clipboard'
@@ -56,9 +55,9 @@ export function PorEvento() {
               {s}
             </button>
           ))}
-          <Button variant="secondary" onClick={handleCopy} className="flex items-center gap-2 ml-auto">
-            <Copy size={14} /> Copiar WhatsApp
-          </Button>
+          <button onClick={handleCopy} title="Copiar WhatsApp" className="p-1.5 ml-auto text-zinc-500 hover:text-zinc-200 transition-colors">
+            <Copy size={16} />
+          </button>
         </div>
         <div className="flex flex-col md:flex-row gap-4">
           <PlayerSidebar

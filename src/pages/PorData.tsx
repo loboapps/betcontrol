@@ -4,7 +4,6 @@ import { Layout } from '../components/layout/Layout'
 import { PlayerSidebar } from '../components/analytics/PlayerSidebar'
 import { PorDataTable } from '../components/analytics/PorDataTable'
 import { Input } from '../components/ui/Input'
-import { Button } from '../components/ui/Button'
 import { usePorData } from '../hooks/usePorData'
 import { usePlayerSummary } from '../hooks/usePlayerSummary'
 import { porDataToWhatsApp } from '../lib/clipboard'
@@ -35,9 +34,9 @@ export function PorData() {
         <div className="flex flex-wrap gap-3 items-end mb-4">
           <Input type="date" label="De"  value={from} onChange={(e) => setFrom(e.target.value)} className="w-36" />
           <Input type="date" label="Até" value={to}   onChange={(e) => setTo(e.target.value)}   className="w-36" />
-          <Button variant="secondary" onClick={handleCopy} className="flex items-center gap-2 mb-0.5">
-            <Copy size={14} /> Copiar WhatsApp
-          </Button>
+          <button onClick={handleCopy} title="Copiar WhatsApp" className="p-1.5 mb-0.5 text-zinc-500 hover:text-zinc-200 transition-colors">
+            <Copy size={16} />
+          </button>
         </div>
         <div className="flex flex-col md:flex-row gap-4">
           <PlayerSidebar

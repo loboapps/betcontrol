@@ -1,5 +1,4 @@
 import { Copy } from 'lucide-react'
-import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
 import { BetRow } from './BetRow'
 import type { Bet } from '../../types'
@@ -23,10 +22,9 @@ export function BetList({ bets, loading, onCopyWhatsApp }: BetListProps) {
     <div>
       <div className="flex justify-between items-center px-4 py-2">
         <span className="text-sm text-zinc-500">{bets.length} aposta{bets.length !== 1 ? 's' : ''}</span>
-        <Button variant="secondary" onClick={onCopyWhatsApp} className="flex items-center gap-2">
-          <Copy size={14} />
-          Copiar WhatsApp
-        </Button>
+        <button onClick={onCopyWhatsApp} title="Copiar WhatsApp" className="p-1.5 text-zinc-500 hover:text-zinc-200 transition-colors">
+          <Copy size={16} />
+        </button>
       </div>
       <Card className="mx-4 overflow-hidden">
         {bets.map((bet) => <BetRow key={bet.id} bet={bet} />)}
