@@ -20,15 +20,21 @@ interface SlipUploadProps {
   players: Player[]
 }
 
-const EMPTY_FORM = {
-  slip_ref: '',
-  bet_date: new Date().toISOString().slice(0, 10),
-  sport: '',
-  won: false,
-  gtd: false,
-  vendor: 'fanduel',
-  total_buyin: 0,
-  total_payout: 0,
+function todayET(): string {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
+}
+
+function makeEmptyForm() {
+  return {
+    slip_ref: '',
+    bet_date: todayET(),
+    sport: '',
+    won: false,
+    gtd: false,
+    vendor: 'fanduel',
+    total_buyin: 0,
+    total_payout: 0,
+  }
 }
 
 function onlyDecimal(val: string): string {
@@ -45,7 +51,7 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
   const [dragging, setDragging]         = useState(false)
   const [selectedFile, setSelectedFile] = useState<string | null>(null)
   const [parseError, setParseError]     = useState<string | null>(null)
-  const [form, setForm]                 = useState({ ...EMPTY_FORM })
+  const [form, setForm]                 = useState(makeEmptyForm())
   const [legs, setLegs]                 = useState<string[]>([''])
   const [buyinStr, setBuyinStr]         = useState('')
   const [payoutStr, setPayoutStr]       = useState('')
@@ -197,7 +203,7 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
 
     setSaving(false)
     setSaved(true)
-    setForm({ ...EMPTY_FORM })
+    setForm(makeEmptyForm())
     setLegs([''])
     setBuyinStr('')
     setPayoutStr('')
@@ -255,12 +261,24 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
 
       <Card className="p-4 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            label="Data"
-            type="date"
-            value={form.bet_date}
-            onChange={(e) => setForm((f) => ({ ...f, bet_date: e.target.value }))}
-          />
+          <div className="flex flex-col gap-1">
+            <label className="text-sm text-zinc-400">Data</label>
+            <div className="flex gap-2">
+              <input
+                type="date"
+                value={form.bet_date}
+                onChange={(e) => setForm((f) => ({ ...f, bet_date: e.target.value }))}
+                className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-zinc-100 text-sm focus:outline-none focus:border-amber-500"
+              />
+              <button
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, bet_date: todayET() }))}
+                className="px-3 py-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-zinc-300 text-xs font-medium transition-colors"
+              >
+                Hoje
+              </button>
+            </div>
+          </div>
           <div className="flex flex-col gap-1">
             <label className="text-sm text-zinc-400">Esporte</label>
             <select

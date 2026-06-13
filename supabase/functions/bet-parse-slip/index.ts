@@ -37,6 +37,8 @@ Deno.serve(async (req: Request) => {
       })
     }
 
+    const todayET = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
+
     const client = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY') })
 
     const message = await client.messages.create({
@@ -58,9 +60,14 @@ Deno.serve(async (req: Request) => {
               type: 'text',
               text: `Parse this FanDuel bet slip image. Return ONLY valid JSON — no markdown, no explanation.
 
+Today's date in US Eastern Time (New Jersey) is ${todayET}.
+
 FIELD MAPPING:
 - slip_ref: the BET ID in the header (e.g. "O/1141360/0001679"). Empty string if not visible.
-- bet_date: date placed, format YYYY-MM-DD. If only time is visible use today's date.
+- bet_date: date the bet was placed, format YYYY-MM-DD. Rules:
+    * If only a time is visible (e.g. "9:00PM ET") → use ${todayET}.
+    * If a full date is shown (e.g. "FEB 8", "Feb 8") → parse it; assume current year unless the year is explicit.
+    * If only a day of week is shown (e.g. "SUN", "MON") → use the most recent past occurrence of that weekday on or before ${todayET} in US Eastern Time.
 - total_buyin: the "Wager" field value as a plain number (no $ sign).
 - total_payout: the "Total payout" field value as a plain number (no $ sign).
 - sport: always return empty string "".
