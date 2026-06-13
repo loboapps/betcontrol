@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Upload, CheckCircle } from 'lucide-react'
+import { Upload, CheckCircle, Plus } from 'lucide-react'
 import { Card } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
@@ -23,13 +23,18 @@ interface SlipUploadProps {
 const EMPTY_FORM = {
   slip_ref: '',
   bet_date: new Date().toISOString().slice(0, 10),
-  description: '',
-  total_buyin: 0,
-  total_payout: 0,
   sport: '',
   won: false,
   gtd: false,
   vendor: 'fanduel',
+  total_buyin: 0,
+  total_payout: 0,
+}
+
+function onlyDecimal(val: string): string {
+  const cleaned = val.replace(/[^0-9.]/g, '')
+  const parts = cleaned.split('.')
+  return parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : cleaned
 }
 
 export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUploadProps) {
@@ -41,6 +46,9 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
   const [selectedFile, setSelectedFile] = useState<string | null>(null)
   const [parseError, setParseError]     = useState<string | null>(null)
   const [form, setForm]                 = useState({ ...EMPTY_FORM })
+  const [legs, setLegs]                 = useState<string[]>([''])
+  const [buyinStr, setBuyinStr]         = useState('')
+  const [payoutStr, setPayoutStr]       = useState('')
   const [allocations, setAllocations]   = useState<PlayerAllocation[]>([])
   const [inputTokens, setInputTokens]   = useState<number | null>(null)
   const [outputTokens, setOutputTokens] = useState<number | null>(null)
@@ -66,7 +74,19 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
         const json = (await res.json()) as { data?: ParsedSlip; input_tokens?: number; output_tokens?: number; error?: string }
         if (json.error) throw new Error(json.error)
         if (json.data) {
-          setForm((prev) => ({ ...prev, ...json.data, sport: prev.sport, won: prev.won, gtd: prev.gtd }))
+          const data = json.data
+          setForm((prev) => ({
+            ...prev,
+            slip_ref:    data.slip_ref,
+            bet_date:    data.bet_date,
+            vendor:      data.vendor,
+            total_buyin: data.total_buyin,
+            total_payout: data.total_payout,
+          }))
+          const parsed = data.description.split('\n').filter((l) => l.trim())
+          setLegs(parsed.length > 0 ? parsed : [''])
+          setBuyinStr(data.total_buyin > 0 ? data.total_buyin.toFixed(2) : '')
+          setPayoutStr(data.total_payout > 0 ? data.total_payout.toFixed(2) : '')
           setInputTokens(json.input_tokens ?? null)
           setOutputTokens(json.output_tokens ?? null)
         }
@@ -101,6 +121,14 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
     void parseFile(file)
   }
 
+  function updateLeg(i: number, value: string) {
+    setLegs((prev) => {
+      const next = [...prev]
+      next[i] = value
+      return next
+    })
+  }
+
   function totalAllocated(): number {
     return allocations.reduce((s, a) => s + (parseFloat(a.buyin) || 0), 0)
   }
@@ -108,9 +136,11 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
   async function handleSave() {
     const allocated = totalAllocated()
     if (Math.abs(allocated - form.total_buyin) > 0.01) {
-      alert(`Total alocado (R$ ${allocated.toFixed(2)}) deve ser igual ao buyin total (R$ ${form.total_buyin.toFixed(2)})`)
+      alert(`Total alocado ($${allocated.toFixed(2)}) deve ser igual ao wager ($${form.total_buyin.toFixed(2)})`)
       return
     }
+
+    const description = legs.filter((l) => l.trim()).join('\n')
 
     setSaving(true)
     const playerPayload = allocations
@@ -136,7 +166,7 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
         bet: {
           slip_ref:          form.slip_ref || null,
           bet_date:          form.bet_date,
-          description:       form.description,
+          description,
           sport:             form.sport,
           event_label:       null,
           total_buyin:       form.total_buyin,
@@ -154,6 +184,9 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
     setSaving(false)
     setSaved(true)
     setForm({ ...EMPTY_FORM })
+    setLegs([''])
+    setBuyinStr('')
+    setPayoutStr('')
     setAllocations(players.map((p) => ({ player_id: p.id, name: p.name, buyin: '' })))
     setInputTokens(null)
     setOutputTokens(null)
@@ -161,6 +194,8 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
     if (fileRef.current) fileRef.current.value = ''
     setTimeout(() => setSaved(false), 3000)
   }
+
+  const hasLegs = legs.some((l) => l.trim())
 
   return (
     <div className="space-y-6">
@@ -224,33 +259,67 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
             </select>
           </div>
         </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-sm text-zinc-400">Descrição</label>
-          <textarea
-            rows={4}
-            value={form.description}
-            onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-            className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-zinc-100 text-sm focus:outline-none focus:border-amber-500 resize-none font-mono"
-          />
+
+        <div className="flex flex-col gap-2">
+          <label className="text-sm text-zinc-400">Legs</label>
+          {legs.map((leg, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <span className="text-zinc-600 text-xs tabular-nums w-4 text-right shrink-0">{i + 1}</span>
+              <input
+                value={leg}
+                onChange={(e) => updateLeg(i, e.target.value)}
+                className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-zinc-100 text-sm font-mono focus:outline-none focus:border-amber-500"
+              />
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => setLegs((prev) => [...prev, ''])}
+            className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 self-start mt-0.5 transition-colors"
+          >
+            <Plus size={12} /> add leg
+          </button>
         </div>
+
         <div className="grid grid-cols-2 gap-4">
-          <Input
-            label="Total Buyin (R$)"
-            type="number"
-            step="0.01"
-            min="0"
-            value={form.total_buyin || ''}
-            onChange={(e) => setForm((f) => ({ ...f, total_buyin: parseFloat(e.target.value) || 0 }))}
-          />
-          <Input
-            label="Total Payout (R$)"
-            type="number"
-            step="0.01"
-            min="0"
-            value={form.total_payout || ''}
-            onChange={(e) => setForm((f) => ({ ...f, total_payout: parseFloat(e.target.value) || 0 }))}
-          />
+          <div className="flex flex-col gap-1">
+            <label className="text-sm text-zinc-400">Wager ($)</label>
+            <input
+              type="text"
+              inputMode="decimal"
+              placeholder="0.00"
+              value={buyinStr}
+              onChange={(e) => {
+                const val = onlyDecimal(e.target.value)
+                setBuyinStr(val)
+                setForm((f) => ({ ...f, total_buyin: parseFloat(val) || 0 }))
+              }}
+              onBlur={() => {
+                if (form.total_buyin > 0) setBuyinStr(form.total_buyin.toFixed(2))
+              }}
+              className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-zinc-100 text-sm font-mono focus:outline-none focus:border-amber-500"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm text-zinc-400">Payout ($)</label>
+            <input
+              type="text"
+              inputMode="decimal"
+              placeholder="0.00"
+              value={payoutStr}
+              onChange={(e) => {
+                const val = onlyDecimal(e.target.value)
+                setPayoutStr(val)
+                setForm((f) => ({ ...f, total_payout: parseFloat(val) || 0 }))
+              }}
+              onBlur={() => {
+                if (form.total_payout > 0) setPayoutStr(form.total_payout.toFixed(2))
+              }}
+              className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-zinc-100 text-sm font-mono focus:outline-none focus:border-amber-500"
+            />
+          </div>
         </div>
+
         <div className="flex gap-6">
           <label className="flex items-center gap-2 cursor-pointer">
             <input
@@ -271,6 +340,7 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
             <span className="text-zinc-200 text-sm">GTD (devolvido)</span>
           </label>
         </div>
+
         <Input
           label="Slip Ref (opcional)"
           value={form.slip_ref}
@@ -286,7 +356,7 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
               ? 'text-emerald-400'
               : 'text-zinc-400'
           }`}>
-            R$ {totalAllocated().toFixed(2).replace('.', ',')} / R$ {form.total_buyin.toFixed(2).replace('.', ',')}
+            ${totalAllocated().toFixed(2)} / ${form.total_buyin.toFixed(2)}
           </span>
         </div>
         <div className="space-y-2">
@@ -297,7 +367,7 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
                 type="number"
                 step="0.01"
                 min="0"
-                placeholder="0,00"
+                placeholder="0.00"
                 value={alloc.buyin}
                 onChange={(e) => {
                   const next = [...allocations]
@@ -316,7 +386,7 @@ export function SlipUpload({ adminToken, supabaseFunctionUrl, players }: SlipUpl
 
       <Button
         onClick={() => { void handleSave() }}
-        disabled={saving || !form.sport || !form.description || form.total_buyin <= 0}
+        disabled={saving || !form.sport || !hasLegs || form.total_buyin <= 0}
         className="flex items-center gap-2"
       >
         {saved ? <><CheckCircle size={16} /> Salvo!</> : saving ? 'Salvando...' : 'Confirmar e Salvar'}

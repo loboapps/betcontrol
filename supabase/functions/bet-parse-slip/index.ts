@@ -67,23 +67,21 @@ FIELD MAPPING:
 - description: structured multi-line text following the rules below.
 
 DESCRIPTION RULES:
-1. If it is a Same Game Parlay (SGP): first line = "SGP: [team1] v [team2]"
-   If it is a regular parlay: first line = "Parlay"
-   If it is a single bet: no header line.
-2. Each selection (leg) gets its own line: "[player] [prop]"
-3. Player name: abbreviate first name to initial only → "Christian Pulisic" becomes "C. Pulisic"
+1. List every selection (leg) — one per line, no header for SGP or Parlay type.
+2. Each line format: "[player] [prop]"
+3. Player name: abbreviate first name to initial only → "Christian Pulisic" → "C. Pulisic"
 4. If a leg has NO visible player name: use "[?]" as the player placeholder.
-5. Team bets (no individual player): use team abbreviation or short name.
+5. Team bets (no individual player): use team short name.
 6. Prop abbreviations:
-   - "over" or "Over" → "o"  (e.g. "Over 1.5" → "o1.5")
-   - "under" or "Under" → "u"  (e.g. "Under 2.5" → "u2.5")
+   - "over" / "Over" → "o"  (e.g. "Over 1.5" → "o1.5")
+   - "under" / "Under" → "u"  (e.g. "Under 2.5" → "u2.5")
    - "N or more X" → "N+ X"  (e.g. "1 or more shots on target" → "1+ Shots on target")
    - "to score" → "Score"
 7. Capitalize stat names (e.g. "shots on target" → "Shots on target").
 
 EXAMPLE — SGP with 2 legs, first player name not visible:
 {
-  "description": "SGP: USA v Paraguay\\n[?] o1+ Shots on target\\nC. Pulisic o1+ Shots on target"
+  "description": "[?] o1+ Shots on target\\nC. Pulisic o1+ Shots on target"
 }
 
 Return this exact JSON shape:
